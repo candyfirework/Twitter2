@@ -30,7 +30,6 @@ export async function updateTweet(req, res, next) {
     const id = req.params.id;
     const text = req.body.text;
     const tweet = await tweetRepository.update(id, text);
-
     if (tweet) {
         res.status(200).json(tweet);
     } else {
@@ -40,7 +39,7 @@ export async function updateTweet(req, res, next) {
 
 export async function deleteTweet(req, res, next) {
     const id = req.params.id
-    tweets = tweetRepository.remove(id)
+    const tweets = await tweetRepository.remove(id)
     res.sendStatus(204);
 }
 

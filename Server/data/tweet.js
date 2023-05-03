@@ -20,7 +20,7 @@ let tweets = [
 ];
 
 
-export async function geyAll() {
+export async function getAll() {
     return tweets;
 }
 
@@ -43,7 +43,7 @@ export async function create(text, name, username) {
     return tweets;
 }
 
-export async function update(id, name) {
+export async function update(id, text) {
     const tweet = tweets.find((tweet) => tweet.id === id)
     if (tweet) {
         tweet.text = text;
