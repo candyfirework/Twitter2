@@ -2,6 +2,8 @@ import express from 'express';
 import * as tweetController from '../controller/tweet.js'
 import { body, param, validationResult } from 'express-validator';
 import { validate } from '../middleware/validator.js';
+import { isAuth } from '../middleware/auth.js';
+
 
 const router = express.Router();
 
@@ -28,12 +30,12 @@ const validateTweet = [
 
 // GET
 // /tweets?username=:username  각각(key, value)
-router.get('/', tweetController.getTweets);
+router.get('/', isAuth, tweetController.getTweets);
 
 // GET
 // /tweets/:id
 
-router.get('/:id', tweetController.getTweet);
+router.get('/:id', isAuth, tweetController.getTweet);
 
 //text 가 4자 이하인 경우 에러처리 (POST, PUT)
 
@@ -41,6 +43,7 @@ router.get('/:id', tweetController.getTweet);
 // id : Date.now().toString()
 // POST는 데이터를 추가 할때 많이 사용한다.
 router.post('/',
+    isAuth,
     validateTweet,
     tweetController.createTweet);
 
@@ -52,6 +55,7 @@ router.post('/',
 //PUT
 // text만 수정
 router.put('/:id',
+    isAuth,
     validateTweet,
     tweetController.updateTweet);
 
@@ -64,9 +68,7 @@ router.put('/:id',
 
 
 //DELETE
-router.delete('/:id', tweetController.deleteTweet);
-
-
+router.delete('/:id', isAuth, tweetController.deleteTweet);
 
 export default router;
 
