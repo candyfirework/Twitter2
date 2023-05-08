@@ -91,8 +91,6 @@ const validateSignup = [
 ]
 
 
-
-
 router.post('/signup',validateSignup, authjController.signup)
 
 router.post('/login',validateCredential, authjController.login)
