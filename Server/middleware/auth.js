@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import * as userRepository from'../data/auth.js'; //파일 밖으로 나가서 가져온다는 뜻
+import {config}  from '../config.js'
 
 const AUTH_ERROR = { message:'인증 에러!'};
 
@@ -11,7 +12,8 @@ export const isAuth = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     jwt.verify(
         token,
-        'HT!sfh99Ec0Ggr5jGpjD%7xtZgdi4#TU', //secret key로 정보처리
+        config.jwt.secretKey,
+        /*'HT!sfh99Ec0Ggr5jGpjD%7xtZgdi4#TU', //secret key로 정보처리*/
         async(error, decoded) => {
             if(error){
                 return res.status(401).json(AUTH_ERROR);

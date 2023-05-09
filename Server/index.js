@@ -3,6 +3,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import tweetsRouter from './router/tweets.js'
 import authRouter from './router/auth.js'
+import {config} from './config.js'
 
 const app = express()
 
@@ -25,4 +26,4 @@ app.use((error, req, res, next) => {
     res.sendStatus(500)
 })
 
-app.listen(8080)
+app.listen(config.host.port)
