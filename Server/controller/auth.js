@@ -25,7 +25,7 @@ export async function signup(req, res){
         name,
         email,
         url
-    })
+    });
     const token = createJwtToken(userId)
     res.status(201).json({token, username})  // jwt로 생성된 userId의 token값과 username을 json으로 사용자에게 전달
     
@@ -63,5 +63,5 @@ export async function me(req, res, next){
 //token을 생성해주는 함수
 //id를 넣으면 sign메서드에 의해 token 생성
 function createJwtToken(id) {
-    return jwt.sign({id}, config.jwt.secretKey, {expiresIn:config.jwt.expireInSec})  
+    return jwt.sign({id}, config.jwt.secretKey, {expiresIn:config.jwt.expiresInSec})  
 }
