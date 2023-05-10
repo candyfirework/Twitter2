@@ -1,4 +1,5 @@
 import * as tweetRepository from '../data/tweet.js';
+import { getSocketIO } from '../connection/socket.js';
 
 export async function getTweets(req, res) {
     const username = req.query.username;
@@ -22,8 +23,9 @@ export async function createTweet(req, res, next) {
     const { text } = req.body;
     // req.body에서 가져오기
     const tweet = await tweetRepository.create(text, req.userId);
-    res.status(201).json(tweet)
-
+    res.status(201).json(tweet);
+    getSocketIO().emit('tweets', tweet);
+    
 }
 
 export async function updateTweet(req, res, next) {
@@ -51,7 +53,7 @@ export async function deleteTweet(req, res, next) {
     if(!tweet) {
         res.status(404).json({ message: `tweet id(${id})not found` })
     }
-    if(usreId !== req.userID){
+    if(tweet.userId !== req.userId){
         return res.sendStatus(403);
     }
     await tweetRepository.remove(id)

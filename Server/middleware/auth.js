@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken'
 import * as userRepository from '../data/auth.js'
+import {config} from '../config.js';
+
 const AUTH_ERROR = { message: '인증 에러!' }  // 로그인되지 않았거나 token 에러난 경우 메시지 출력
 // 인증이 됐는지에 대한 여부를 나타내는 비동기 함수
 export const isAuth = async (req, res, next) => {
@@ -13,7 +15,7 @@ export const isAuth = async (req, res, next) => {
     jwt.verify(
         token,
         //토큰 해석하는 secretkey(contoller/auth.js)
-        'E5!87O2bPUp5Hj9P$2S@KsPk1IVh#Lbj',
+        config.jwt.secretkey,
         async (error, decoded) => {
             if (error) {
                 return res.status(402).json(AUTH_ERROR);

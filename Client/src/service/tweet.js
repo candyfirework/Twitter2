@@ -1,5 +1,5 @@
 export default class TweetService {
-  // tweets = [
+    // tweets = [
   //   {
   //     id: 1,
   //     text: '첫번째 트윗이예요!',
@@ -11,9 +11,10 @@ export default class TweetService {
   // ];
 
   // 네트워크를 통해 데이터 가져오기
-  constructor(http, tokenStorage) {
+  constructor(http, tokenStorage, socket) {
     this.http = http;
     this.tokenStorage = tokenStorage;
+    this.socket = socket;
   }
 
   async getTweets(username) {
@@ -21,15 +22,16 @@ export default class TweetService {
     // fetch 를 통해 /tweets?username=:username 형식으로 return 시켜주기
     //있으면 username , 없으면 '' return
     const query = username ? `?username=${username}` : '';
-    return this.http.fetch(`/tweets${query}`, {     //username이 apple이라면 ?username=apple, 없으면 ?username
-      mehtod: "GET",
-      headers: this.getHeaders()
-    })
+    return this.http.fetch(`/tweets${query}`, { //username이 apple이라면 ?username=apple, 없으면 ?username
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
   }
 
+  
   // fetch 를 통해 /tweets post로 입력한 데이터 전송
   async postTweet(text) {
-    // console.log('post 방식')
+        // console.log('post 방식')
     // const tweet = {
     //   id: Date.now(),
     //   createdAt: new Date(),
@@ -42,37 +44,39 @@ export default class TweetService {
     return this.http.fetch(`/tweets`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ text, username: '김사과', name: 'apple' })
-    })
-  }
-
-  async deleteTweet(tweetId) {
-    // this.tweets = this.tweets.filter((tweet) => tweet.id !== tweetId);
-    return this.http.fetch(`/tweets${tweetId}`, {
-      method: 'DELETE',
-      headers: this.getHeaders()
+      body: JSON.stringify({ text, username: 'apple', name: '김사과' }),
     });
   }
 
-  async updateTweet(tweetId, text) {
-    // const tweet = this.tweets.find((tweet) => tweet.id === tweetId);
+  async deleteTweet(tweetId) {
+     // const tweet = this.tweets.find((tweet) => tweet.id === tweetId);
     // if (!tweet) {
     //   throw new Error('tweet not found!');
     // }
     // tweet.text = text;
     // return tweet;
-    return this.http.fetch(`/tweets${tweetId}`, {
-      method: 'UPDATE',
+    return this.http.fetch(`/tweets/${tweetId}`, {
+      method: 'DELETE',
       headers: this.getHeaders(),
-      body: JSON.stringify({ text })
-    })
+    });
   }
+
+  async updateTweet(tweetId, text) {
+    return this.http.fetch(`/tweets/${tweetId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ text }),
+    });
+  }
+
   getHeaders() {
     const token = this.tokenStorage.getToken();
     return {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  onSync(callback) {
+    return this.socket.onSync('tweets', callback);
   }
 }
-
-
