@@ -6,7 +6,7 @@ import authRouter from './router/auth.js';
 import { config } from './config.js';
 import { Server } from 'socket.io';
 import { initSocket } from './connection/socket.js';
-
+// import {db} from './db/database.js';
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.use((error, req, res, next) => {
     res.sendStatus(500);
 })
 
-
+// db.getConnection().then((connection) => console.log(connection));
 
 //socket 은 이벤트 기반으로 작용한다.
 const server = app.listen(config.host.port);
