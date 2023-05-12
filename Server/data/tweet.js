@@ -1,47 +1,61 @@
+// 직접 만들기
 import * as userRepository from './auth.js';
+
+// db 버젼
 // import {db} from '../db/database.js';
-import SQ, { Sequelize } from 'sequelize';
-import { sequelize } from '../db/database.js';
-import { User } from './auth.js';
 
-const DataTypes = SQ.DataTypes;
+// sequelize 버젼
+// import SQ, { Sequelize } from 'sequelize';
+// import { sequelize } from '../db/database.js';
+// import { User } from './auth.js';
 
-const Tweet = sequelize.define(
-    'tweet',
-    {
-        id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
-            allowNull: false,
-            primaryKey: true
-        },
-        text: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-        },
 
-    }
-)
+
+import MongoDb from 'mongodb';
+import { getTweets } from '../db/database.js'
+
+
+// const DataTypes = SQ.DataTypes;
+const ObjectID = MongoDb.ObjectId;
+
+
+
+// sequelize 버젼
+// const Tweet = sequelize.define(
+//     'tweet',
+//     {
+//         id: {
+//             type: DataTypes.INTEGER,
+//             autoIncrement: true,
+//             allowNull: false,
+//             primaryKey: true
+//         },
+//         text: {
+//             type: DataTypes.TEXT,
+//             allowNull: false,
+//         },
+
+//     }
+// )
 // 조인하는 함수
-Tweet.belongsTo(User);
-
-const INCLUDE_USER = {
-    attributes: [
-        'id',
-        'text',
-        'createdAt',
-        'userId',
-        // 밑에 데이터는 user테이블에서 가져온것, 특정 컬럼들을 꺼내서 같은레벨의 객체로 리턴
-        [Sequelize.col('user.name'), 'name'],
-        [Sequelize.col('user.username'), 'username'],
-        [Sequelize.col('user.url'), 'url'],
-    ],
-    //inclued -> 속성주기  -> User 태이블까지 한번에 검색한다.
-    include: {
-        model: User,
-        attributes: [],
-    }
-}
+// Tweet.belongsTo(User);
+// const INCLUDE_USER = {
+//     attributes: [
+//         'id',
+//         'text',
+//         'createdAt',
+//         'userId',
+//         // 밑에 데이터는 user테이블에서 가져온것, 특정 컬럼들을 꺼내서 같은레벨의 객체로 리턴
+//         [Sequelize.col('user.name'), 'name'],
+//         [Sequelize.col('user.username'), 'username'],
+//         [Sequelize.col('user.url'), 'url'],
+//     ],
+//     //inclued -> 속성주기  -> User 태이블까지 한번에 검색한다.
+//     include: {
+//         model: User,
+//         attributes: [],
+//     }
+// }
 
 
 const ODER_DESC = {
@@ -65,6 +79,7 @@ const ODER_DESC = {
 
 // ];
 
+// 일반 DB 버젼
 // SELECT join 구문을 만들어놓음
 const SELECT_JOIN = 'select tw.id, tw.text, tw.createdAt, tw.userId, us.username, us.name, us.email, us.url from tweets as tw left outer join users as us on tw.userId = us.id';
 
@@ -86,11 +101,18 @@ export async function getAll() {
     //     .then((result) => result[0]);
 
     // sequelize 변환후
-    return Tweet.findAll({ ...INCLUDE_USER, ...ORDER_DESC })
-        .then((data) => {
-            console.log(data)
-            return data;
-        });
+    // return Tweet.findAll({ ...INCLUDE_USER, ...ORDER_DESC })
+    //     .then((data) => {
+    //         console.log(data)
+    //         return data;
+    //     });
+
+    //mongoDb 
+    return getTweets()
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray()
+        .then(maptweets);
 }
 
 
@@ -104,16 +126,23 @@ export async function getAllByUsername(username) {
     //     .then((result) => result[0]);
 
     // sequelize 변환후
-    return Tweet.findAll(
-        {
-            ...INCLUDE_USER,
-            ...ORDER_DESC,
-            include: {
-                ...INCLUDE_USER.include,
-                where: { username }
-            }
+    // return Tweet.findAll(
+    //     {
+    //         ...INCLUDE_USER,
+    //         ...ORDER_DESC,
+    //         include: {
+    //             ...INCLUDE_USER.include,
+    //             where: { username }
+    //         }
 
-        });
+    //     });
+
+    //mongoDb 
+    return getTweets()
+        .find({ username })
+        .sort({ createdAt: -1 })
+        .toArray()
+        .then(maptweets)
 }
 
 export async function getById(id) {
@@ -130,11 +159,18 @@ export async function getById(id) {
     //     .then((result) => result[0][0]);
 
     // sequelize 변환후
-    return Tweet.findOne({
-        // id를 찾는데 INCLUDE_USER 에서 찾기
-        where: { id },
-        ...INCLUDE_USER
-    })
+    // return Tweet.findOne({
+    //     // id를 찾는데 INCLUDE_USER 에서 찾기
+    //     where: { id },
+    //     ...INCLUDE_USER
+    // })
+
+    //mongoDb  
+    return getTweets()
+        .find({ _id: new ObjectID(id)})
+        .sort({ createdAt: -1 })
+        .next()
+        .then(mapOptionalTweet)
 }
 
 
@@ -154,11 +190,24 @@ export async function create(text, userId) {
     //     .then((result) => console.log(result));
 
     // sequelize 변환후
-    return Tweet.create({ text, userId })
-        .then((data) => {
-            console.log(data);
-            return data;
-        })
+    // return Tweet.create({ text, userId })
+    //     .then((data) => {
+    //         console.log(data);
+    //         return data;
+    //     })
+
+    //mongoDb     
+    return userRepository.findById(userId)
+        .then((user) => getTweets().insertOne({
+            text,
+            createdAt: new Date(),
+            userId,
+            name: user.name,
+            username: user.username,
+            url: user.url
+        }))
+        .then((result) => console.log(result))
+        .then(mapOptionalTweet)
 }
 
 export async function update(id, text) {
@@ -174,11 +223,20 @@ export async function update(id, text) {
     //     .then(() => getById(id))
 
     // sequelize 변환후
-    return Tweet.findByPk(id, INCLUDE_USER)
-        .then((tweet) => {
-            tweet.text = text;
-            return tweet.save()
-        })
+    // return Tweet.findByPk(id, INCLUDE_USER)
+    //     .then((tweet) => {
+    //         tweet.text = text;
+    //         return tweet.save()
+    //     })
+
+    //mongoDb     
+    return getTweets().findOneAndUpdate(
+        {_id: new ObjectID(id) },
+        { $set: { text }},
+        { returnOriginal: false }
+    )
+    .then((res) => res.value)
+    .then(mapOptionalTweet);
 }
 
 
@@ -191,11 +249,22 @@ export async function remove(id) {
     // return db.execute('delete from tweets where id=?', [id]);
 
     // sequelize 변환후
-    return Tweet.findByPk(id, INCLUDE_USER)
-    .then((tweet) => {
-        tweet.destroy()
-    });
+    // return Tweet.findByPk(id, INCLUDE_USER)
+    // .then((tweet) => {
+    //     tweet.destroy()
+    // });
+
+    //mongoDb 
+    return getTweets().deleteOne({ _id: new ObjectID(id) })
 }
 
+function mapOptionalTweet(tweet) {
+    // tweet 존재하면 복사해서 id에 tweet의 아이디를 스트링 형태로 넣는다.
+    return tweet ? { ...tweet, id: tweet._id.toString() } : tweet;
+};
+
+function maptweets(tweets) {
+    return tweets.map(mapOptionalTweet)
+}
 
 

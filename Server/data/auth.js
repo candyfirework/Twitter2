@@ -1,49 +1,62 @@
 // import {db} from '../db/database.js';
-import SQ from 'sequelize';
-import { sequelize } from '../db/database.js';
+// import { sequelize } from '../db/database.js';
+// import SQ from 'sequelize';
 
+import {getUsers} from "../db/database.js";
+import MongoDb from "mongodb";
+
+// sequelize
 // 데이터 타입 결정하기
-const DataTypes = SQ.DataTypes
+// const DataTypes = SQ.DataTypes
+// export const User = sequelize.define(
+//     'user',
+//     {
+//         id: {
+//             type: DataTypes.INTEGER,
+//             autoIncrement: true,
+//             allowNull: false,
+//             primaryKey: true,
+//         },
+//         username: {
+//             type: DataTypes.STRING(45),
+//             allowNull: false
+//         },
+//         password: {
+//             type: DataTypes.STRING(128),
+//             allowNull: false
+//         },
+//         name: {
+//             type: DataTypes.STRING(45),
+//             allowNull: false
+//         },
+//         email: {
+//             type: DataTypes.STRING(128),
+//             allowNull: false,
+//         },
+//         url: {
+//             type: DataTypes.TEXT(),
+//             allowNull: true
+//         },
+//         // regdate : 날짜타입, 현재시간을 자동 등록
+//         regdate: {
+//             type: DataTypes.DATE(),
+//             defaultValue: DataTypes.NOW
+//         }
+//     },
+//     { timestamps: false }
+// )
+
+
+
+
+
+// Mongodb
+// mongodb는 객체형식을 데이터를 저장한다. 데이터를 관리할때 특정 테이블이나 고유값이 없기 때문에 데이터를 관리하기위해 mongodb 는 ObjectID 라는 고유값이 있다.
+const ObjectID = MongoDb.ObjectId;
+
 
 //user 라고 만들면 users 라고 만듬 무조건 s를 붙임, 만약 users가 있다면 만드는게 아니라 그 테이블을 가르키게 된다.
 
-export const User = sequelize.define(
-    'user',
-    {
-        id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
-            allowNull: false,
-            primaryKey: true,
-        },
-        username: {
-            type: DataTypes.STRING(45),
-            allowNull: false
-        },
-        password: {
-            type: DataTypes.STRING(128),
-            allowNull: false
-        },
-        name: {
-            type: DataTypes.STRING(45),
-            allowNull: false
-        },
-        email: {
-            type: DataTypes.STRING(128),
-            allowNull: false,
-        },
-        url: {
-            type: DataTypes.TEXT(),
-            allowNull: true
-        },
-        // regdate : 날짜타입, 현재시간을 자동 등록
-        regdate: {
-            type: DataTypes.DATE(),
-            defaultValue: DataTypes.NOW
-        }
-    },
-    { timestamps: false }
-)
 
 
 // abcd1234 -> $2b$10$jiHvT2MVzy2dSOFI9tnJeu.AwFbaGtB.zGVrzr8dkyHwhV6WwT8YC 
@@ -59,6 +72,7 @@ export const User = sequelize.define(
 // }
 // ]
 
+
 export async function findByUsername(username) {
     // DB 연결전
     // return users.find((user)=> user.username === username)
@@ -70,7 +84,13 @@ export async function findByUsername(username) {
 
     // sequelize 변환후
     // where: {username:username} -> 생략 => username을 찾아주는 메소드 형식
-    return User.findOne({ where: { username } })
+    // return User.findOne({ where: { username } })
+
+    // Mongodb 사용
+    return getUsers().find({username})
+    // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
+    .next()
+    .then(mapOptionalUser);
 }
 
 export async function createUser(user) {
@@ -85,8 +105,17 @@ export async function createUser(user) {
     // .then((result)=> console.log(result[0].insertId));
 
     // sequelize 변환후
-    return User.create(user).then((data) => data.dataValues.id);
+    // return User.create(user).then((data) => data.dataValues.id);
+
+    // Mongodb 사용
+    // insertOne => 하나만 넣기
+    return getUsers().insertOne(user)
+    .then((result)=>{ 
+        console.log(result);
+        // result.ops[0]._id.toString()
+    });
 }
+
 
 export async function findById(id) {
     // DB 연결전
@@ -99,6 +128,23 @@ export async function findById(id) {
     // sequelize 변환후
     // return User.findOne({where : {id}}) 이것도 가능
     // primary key 찾기
-    return User.findByPk(id);
+    // return User.findByPk(id);
+
+    // Mongodb 사용
+    return getUsers()
+    .find({ _id: new ObjectID(id)})
+    // 위에 거가 처리되면 다음으로 넘어가고 처리되지 않는다면 위에서 끝
+    .next()
+    .then(mapOptionalUser)
 }
+
+function mapOptionalUser(user){
+    // user 가 이승면 id에 user 값을 string값을 전달한다.
+    // _id -> ObejectId 를 말한다.
+    return user ? {...user, id:user._id.toString()} :user;
+}
+
+
+
+
 

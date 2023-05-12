@@ -6,7 +6,7 @@ import authRouter from './router/auth.js';
 import { config } from './config.js';
 import { Server } from 'socket.io';
 import { initSocket } from './connection/socket.js';
-import { sequelize } from './db/database.js';
+import { connectDB } from './db/database.js';
 // import {db} from './db/database.js';
 
 
@@ -32,13 +32,14 @@ app.use((error, req, res, next) => {
 
 // db.getConnection().then((connection) => console.log(connection));
 
-sequelize.sync().then((client) => {
-    // console.log(client)
-    //socket 은 이벤트 기반으로 작용한다.
-    const server = app.listen(config.host.port);
-    initSocket(server);
+// sequlize 적용
+// sequelize.sync().then((client) => {
+//     // console.log(client)
+//     //socket 은 이벤트 기반으로 작용한다.
+//     const server = app.listen(config.host.port);
+//     initSocket(server);
 
-});
+// });
 
 
 //socket 은 이벤트 기반으로 작용한다.
@@ -47,3 +48,10 @@ sequelize.sync().then((client) => {
 
 
 
+connectDB().
+then(db => {
+    console.log('연결 성공')
+    const server = app.listen(config.host.port);
+    initSocket(server);
+}).
+catch(console.error);
