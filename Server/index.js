@@ -6,7 +6,8 @@ import authRouter from './router/auth.js'
 import {config} from './config.js' 
 /*import {Server} from 'socket.io'*/
 import {initSocket} from './connection/socket.js'
-import {sequelize} from './db/database.js'
+import {connectDB} from './db/database.js'
+import { Db } from 'mongodb'
 /*import{ db} from "./db/database.js";*/
 
 const app = express()
@@ -31,11 +32,12 @@ app.use((error, req, res, next) => {
 });
 
 // db.getConnection().then((connection) => console.log(connection)); //웹으로도 사용
-sequelize.sync().then(()=>{
-   // console.log(client)
+connectDB().then(() => {
+    //console.log('연결되었습니다');
    const server = app.listen(config.host.port);
     initSocket(server);
-})
+}).catch(console.error);
+
 
 
 
