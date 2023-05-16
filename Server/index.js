@@ -50,7 +50,7 @@ app.use((error, req, res, next) => {
 
 connectDB().
 then(db => {
-    console.log('연결 성공')
+    //console.log('init')
     const server = app.listen(config.host.port);
     initSocket(server);
 }).

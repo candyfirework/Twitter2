@@ -1,23 +1,21 @@
-// 직접 만들기
+
 import * as userRepository from './auth.js';
+import { useVirtualId } from '../db/database.js';
+import Mongoose from 'mongoose';
+//import { getTweets } from '../db/database.js'
 
-// db 버젼
-// import {db} from '../db/database.js';
+const tweetSchema = new Mongoose.Schema({
+    text: { type: String, required: true},
+    userid: { type: String, required: true},
+    name: { type: String, required: true},
+    username: { type: String, required: true},
+    url:String
+},
+{timestamps: true}
+)
 
-// sequelize 버젼
-// import SQ, { Sequelize } from 'sequelize';
-// import { sequelize } from '../db/database.js';
-// import { User } from './auth.js';
-
-
-
-import MongoDb from 'mongodb';
-import { getTweets } from '../db/database.js'
-
-
-// const DataTypes = SQ.DataTypes;
-const ObjectID = MongoDb.ObjectId;
-
+useVirtualId(tweetSchema);
+const Tweet = Mongoose.model('Tweet', tweetSchema);
 
 
 // sequelize 버젼
@@ -88,6 +86,7 @@ const ORDER_DESC = 'order by tw.createdAt desc';
 
 
 export async function getAll() {
+    return Tweet.find().sort({createdAt: -1});
     //  DB 연결전
     // return Promise.all(
     //     tweets.map(async (tweet) => {
@@ -108,16 +107,17 @@ export async function getAll() {
     //     });
 
     //mongoDb 
-    return getTweets()
-        .find()
-        .sort({ createdAt: -1 })
-        .toArray()
-        .then(maptweets);
+    //return getTweets()
+    //    .find()
+    //    .sort({ createdAt: -1 })
+    //    .toArray()
+    //    .then(maptweets);
 }
 
 
 
 export async function getAllByUsername(username) {
+    return Tweet.find ({username}).sort({ createdAt: -1});
     //  DB 연결전
     // return getAll().then((tweets) => tweets.filter((tweet)=> tweet.username ===username))
 
@@ -138,14 +138,15 @@ export async function getAllByUsername(username) {
     //     });
 
     //mongoDb 
-    return getTweets()
-        .find({ username })
-        .sort({ createdAt: -1 })
-        .toArray()
-        .then(maptweets)
+    //return getTweets()
+    //    .find({ username })
+    //    .sort({ createdAt: -1 })
+    //    .toArray()
+    //    .then(maptweets)
 }
 
 export async function getById(id) {
+    return Tweet.findById(id);
     //  DB 연결전
     // const found = tweets.find((tweet) => tweet.id === id);
     // if(!found){
@@ -166,15 +167,23 @@ export async function getById(id) {
     // })
 
     //mongoDb  
-    return getTweets()
-        .find({ _id: new ObjectID(id)})
-        .sort({ createdAt: -1 })
-        .next()
-        .then(mapOptionalTweet)
+    //return getTweets()
+    //    .find({ _id: new ObjectID(id)})
+    //    .sort({ createdAt: -1 })
+    //    .next()
+    //    .then(mapOptionalTweet)
 }
 
 
 export async function create(text, userId) {
+    return userRepository.findById(userId)
+    .then((user) => new Tweet({
+        text,
+        userId,
+        name: user.name,
+        username: user.username
+    }).save()
+    );
     //  DB 연결전
     // const tweet = {
     //     id: Date.now().toString(),
@@ -197,20 +206,22 @@ export async function create(text, userId) {
     //     })
 
     //mongoDb     
-    return userRepository.findById(userId)
-        .then((user) => getTweets().insertOne({
-            text,
-            createdAt: new Date(),
-            userId,
-            name: user.name,
-            username: user.username,
-            url: user.url
-        }))
-        .then((result) => console.log(result))
-        .then(mapOptionalTweet)
+    //return userRepository.findById(userId)
+    //    .then((user) => getTweets().insertOne({
+    //        text,
+    //        createdAt: new Date(),
+    //        userId,
+    //        name: user.name,
+    //        username: user.username,
+    //        url: user.url
+    //    }))
+    //    .then((result) => console.log(result))
+    //    .then(mapOptionalTweet)
 }
 
 export async function update(id, text) {
+    return Tweet.findOneAndUpdate(id, {text},{returnOriginal: false});
+
     //  DB 연결전
     // const tweet = tweets.find((tweet) => tweet.id === id)
     // if (tweet) {
@@ -230,17 +241,20 @@ export async function update(id, text) {
     //     })
 
     //mongoDb     
-    return getTweets().findOneAndUpdate(
-        {_id: new ObjectID(id) },
-        { $set: { text }},
-        { returnOriginal: false }
-    )
-    .then((res) => res.value)
-    .then(mapOptionalTweet);
+    //return getTweets().findOneAndUpdate(
+    //    {_id: new ObjectID(id) },
+    //    { $set: { text }},
+    //    { returnOriginal: false }
+    //)
+    //.then((res) => res.value)
+    //.then(mapOptionalTweet);
 }
 
 
 export async function remove(id) {
+    return getTweets().deleteOne({ _id: new ObjectID(id) })
+    return Tweet.findByIdAndDelete(id);
+}
     //  DB 연결전
     // tweets = tweets.filter((tweet) => tweet.id !== id) // id로 설정한것 빼고 나머지를 선택한다
     // return tweets
@@ -255,16 +269,16 @@ export async function remove(id) {
     // });
 
     //mongoDb 
-    return getTweets().deleteOne({ _id: new ObjectID(id) })
-}
+    //return getTweets().deleteOne({ _id: new ObjectID(id) })
 
-function mapOptionalTweet(tweet) {
-    // tweet 존재하면 복사해서 id에 tweet의 아이디를 스트링 형태로 넣는다.
-    return tweet ? { ...tweet, id: tweet._id.toString() } : tweet;
-};
 
-function maptweets(tweets) {
-    return tweets.map(mapOptionalTweet)
-}
+//function mapOptionalTweet(tweet) {
+//    // tweet 존재하면 복사해서 id에 tweet의 아이디를 스트링 형태로 넣는다.
+//    return tweet ? { ...tweet, id: tweet._id.toString() } : tweet;
+//};
+//
+//function maptweets(tweets) {
+//    return tweets.map(mapOptionalTweet)
+//}
 
 
